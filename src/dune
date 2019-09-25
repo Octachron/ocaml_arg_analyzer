@@ -1,4 +1,4 @@
 (menhir (modules lets))
 (ocamllex (modules lex))
 
-(executable (name arg_analyzer))
+(executable (name arg_analyzer) (libraries compiler-libs.common) )
