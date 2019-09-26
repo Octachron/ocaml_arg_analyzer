@@ -64,6 +64,22 @@ and fn super counter env iter pat e =
         end
       | _ -> back pat expr
     end
+  | Ppat_construct ({txt=Lident "()"; _ }, None) ->
+    let expr = iter.expr iter e in
+    begin match expr.pexp_desc with
+      | Pexp_apply(f,l) ->
+        begin match List.rev l with
+          | (_,x) :: l ->
+            begin match x.P.pexp_desc with
+              | Pexp_construct ({txt=Lident "()"; _}, None) ->
+                if l = [] then f else
+                  { expr with pexp_desc = Pexp_apply(f, List.rev l) }
+              | _ -> back pat expr
+            end
+          | [] -> back pat expr
+        end
+      | _ -> back pat expr
+    end
   | _ -> back pat e
 
 let normalize e =
