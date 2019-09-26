@@ -8,6 +8,8 @@ let (.!()) = L.( (.!()) )
 module M = L.M
 module Se = L.Se
 
+let too_small = 10
+
 let topdown generator map id =
   let all = map.!(id).L.data in
   let potential_from = Lattice.down generator id in
@@ -16,7 +18,7 @@ let topdown generator map id =
         let x = map.!(id) in
         let diff = Se.diff more x.data in
         let w = Se.cardinal more - Se.cardinal diff in
-        if w > 5 then (w,id,diff) :: acc else acc )
+        if w > too_small then (w,id,diff) :: acc else acc )
       potential_from [] in
   let candidate more =
     let sorted = List.sort (fun (x,_,_) (y,_,_) -> compare x y)
@@ -39,7 +41,7 @@ let downtop generator map =
     let more = Se.diff root.more data in
     let diff = Se.cardinal root.more - Se.cardinal more in
     let score = float diff /. float (Se.cardinal data) in
-    if diff > 5
+    if diff > too_small
     then score, { root with more; froms = candidate :: root.froms }
     else 0., root in
   let score map candidate roots = List.fold_left ( fun (score, r) root ->
@@ -75,8 +77,24 @@ let downtop generator map =
       (List.map L.Id.singleton @@ L.Id.elements generator) in
   loop map start start roots
 
+module IdSet = L.IdSet
+module Id = L.Id
+
+let flatten map prs =
+  let all = List.fold_left (fun idset p ->
+      List.fold_left (fun idset id -> IdSet.add id idset) idset (p.id :: p.froms)
+    ) IdSet.empty prs in
+  let final id =
+    let more = map.!(id).L.data in
+    let reduce x pr =
+      if Id.subset pr.id x && not (Id.equal pr.id x) then
+        { pr with more = Se.diff pr.more map.!(x).data; froms = x :: pr.froms }
+      else pr in
+    IdSet.fold reduce all { more; froms = []; id } in
+  IdSet.fold (fun id m -> final id :: m) all []
+
 let pp ppf pr =
   let plus ppf () = Format.fprintf ppf "+" in
   Format.fprintf ppf "%a@,@[%a+@]@,%a"
     L.pp_id pr.id (Pp.list ~sep:plus L.pp_id) pr.froms
-    Pp.binding (Se.elements pr.more)
+    Extract.pp_binding (Se.elements pr.more)

@@ -1,3 +1,10 @@
+type entry = { key:string; normalized:string; expr:Parsetree.expression}
+
+
+let pp_binding ppf toks =
+  let pp ppf x = Format.fprintf ppf "%s=%s" x.key x.normalized in
+  Format.fprintf ppf "@[<hv>%a@]" Pp.(list ~sep:comma pp) toks
+
 let parse file =
   Pparse.parse_implementation ~tool_name:"arg_analyzer" file
 
@@ -91,8 +98,8 @@ let normalize e =
 let bindings str =
   let bindings = ref [] in
   let store key expr =
-    let norm = Format.asprintf "%a" Pprintast.expression (normalize expr) in
-    bindings := (key,norm, expr) :: !bindings in
+    let normalized = Format.asprintf "%a" Pprintast.expression (normalize expr) in
+    bindings := {key; normalized; expr } :: !bindings in
   let value_binding _ vb = match vb.P.pvb_pat.ppat_desc with
     | Ppat_var x when x.txt.[0] = '_' -> store x.txt vb.P.pvb_expr
     | _ -> () in

@@ -1,8 +1,10 @@
 
+type entry =  Extract.entry = { key:string; normalized:string; expr:Parsetree.expression}
 
-type entry = string * string * Parsetree.expression
 module Id = Set.Make(String)
-module Se = Set.Make(struct type t = entry let compare (a,b,_) (c,d,_) = compare (a,b) (c,d) end)
+module Se = Set.Make(struct
+    type t = entry
+    let compare x y = compare (x.key,x.normalized) (y.key,y.normalized) end)
 module IdSet = Set.Make(Id)
 
 
@@ -62,8 +64,9 @@ let create generator data =
 
 
 
+
 let pp_lattice_elt ppf {id;data} =
-  Format.fprintf ppf "%a@,%a" pp_id id Pp.binding (Se.elements data)
+  Format.fprintf ppf "%a@,%a" pp_id id Extract.pp_binding (Se.elements data)
 
 
 let pp_lattice ppf l =
