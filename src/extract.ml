@@ -41,6 +41,8 @@ let is_free v e =
   !t
 
 let rec expr counter env iter (e:P.expression) = match e.pexp_desc with
+  | P.Pexp_ident {txt=Longident.(Ldot(Lident ("Clflags"|"Compenv"),t)); loc } ->
+     { e with pexp_desc = P.Pexp_ident ({txt=Longident.Lident t; loc}) }
   | P.Pexp_ident lid -> rename env (fun txt -> { e with pexp_desc = Pexp_ident {lid with txt} }) lid.txt
   | P.Pexp_fun (Nolabel, None, pat, exp) ->
     let pat = iter.A.pat iter pat in
